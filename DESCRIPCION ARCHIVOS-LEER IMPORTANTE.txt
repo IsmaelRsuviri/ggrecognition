@@ -1,0 +1,20 @@
+					
+	      DESCRIPCIÓN DE LOS ARCHIVOS CONTENIDOS EN https://github.com/IsmaelRsuviri/ggrecognition
+
+
+- Los archivos denominados como CNN-x (CNN-1,2,3), se corresponden con los códigos empleados en las pruebas 1,2 y 3 realizadas con el modelo construido:
+		
+i) Prueba 1: Dataset balanceado con 1205 imágenes de entrenamiento y 345 imágenes de testeo.
+ii)Prueba 2: Dataset balanceado con 1205 imágenes de entrenamiento y 345 imágenes de testeo. En esta prueba se ha excluido la etiqueta "Lenticular" y se han mantenido las otras 4.
+iii) Prueba 3: Dataset desbalanceado con un 70% del dataset total dedicado al entrenamiento y un 30% dedicado al testeo.
+
+- Los archivos denominados como prueba_x_acc (Ejemplo: prueba_1_acc), representan la gráfica de evolución de la precisión del algoritmo a lo largo de las épocas de entrenamiento.
+
+- Los archivos denominados como prueba_x_loss (Ejemplo: prueba_1_loss) se corresponden con la gráfica de evolución de la función de pérdidas a lo largo de las épocas de entrenamiento.
+
+-Los archivos designados como prueba_x_conf (Ejemplo: prueba_1_conf) se corresponden con la matriz de confusión de cada  sistema.
+
+-Los archivos designados como transfer_x, (Ejemplo: transfer_googLeNet) se corresponden con el código usado para llevar a cabo el método de transfer learning.
+
+-El archivo denominado como CNN-vega se corresponde con el código empleado para analizar los datos con la estructrura del algoritmo presentado en J. Vega-ferrero, et al.
+

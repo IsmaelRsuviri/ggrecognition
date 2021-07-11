@@ -1,0 +1,94 @@
+close all
+clear all
+clc
+
+databasepathtrain='C:\Users\Aussar\Desktop\TFG\CNN_galaxias\TRAIN';
+%databasepathtest='C:\Users\Aussar\Desktop\TFG\CNN_galaxias\images_test_rev1';
+
+imds = imageDatastore(databasepathtrain,'IncludeSubfolders',true,'FileExtension',{'.jpg'},'LabelSource','foldernames');
+%imdsTest= imageDatastore(databasepathtest,'IncludeSubfolders',true,'FileExtension',{'.jpg'});
+
+imageAugmenter = imageDataAugmenter( ...
+    'RandRotation',[-320,360], ...
+    'RandXTranslation',[-5 5], ...
+    'RandYTranslation',[-5 5],...
+    'RandXReflection',true,...
+    'RandYReflection',true,...
+    'RandScale',[0.65 1.15]);
+    numTrainFiles=1200;
+[imdsTrain,imdsResto]=splitEachLabel(imds,1205,'randomize');
+[imdsValidation,imdsResto2]=splitEachLabel(imdsResto,340,'randomize');
+summary(imdsTrain.Labels)
+summary(imdsValidation.Labels)
+summary(imds.Labels)
+imdsTrain2 = augmentedImageDatastore([86 86],imdsTrain,'DataAugmentation',imageAugmenter);
+imdsValidation2 = augmentedImageDatastore([86 86],imdsValidation,'DataAugmentation',imageAugmenter);
+layers=[imageInputLayer([86 86 3],'name','Input')
+    
+    convolution2dLayer(6,36,'name','Convolutional layer 1','padding','same')
+    batchNormalizationLayer('name','Batch normalization 1')
+    reluLayer('name','ReLU 1')
+    maxPooling2dLayer(20,'name','Max pooling 1','Stride',2)
+    convolution2dLayer(5,64,'name','Convolutional layer 2','Stride',2,...
+    'padding','same')
+    batchNormalizationLayer('name','Batch normalization 2')
+    reluLayer('name','ReLU 2')                 
+    maxPooling2dLayer(8,'name','Max pooling 2','Stride',2)
+   
+    convolution2dLayer(3,196,'name','Convolutional layer 3','Stride',2,...
+    'padding','same','WeightsInitializer','narrow-normal',...
+    'BiasLearnRateFactor',2,'WeightLearnRateFactor',1.2)
+    batchNormalizationLayer('name','Batch normalization 3')
+    reluLayer('name','ReLU 3') 
+   
+    convolution2dLayer(3,256,'name','Convolutional layer 4','Stride',2,'padding','same',...
+    'WeightsInitializer','narrow-normal','BiasLearnRateFactor',20,'WeightLearnRateFactor',15)
+    batchNormalizationLayer('name','Batch normalization 4')
+    reluLayer('name','ReLU 4')
+      
+    
+    fullyConnectedLayer(2048,'name','Fully connected 1','WeightsInitializer','narrow-normal',...
+    'BiasInitializer','narrow-normal','BiasLearnRateFactor',2,'WeightLearnRateFactor',1.2)
+    reluLayer('name','ReLU 5')
+    fullyConnectedLayer(2048,'name','Fully connected 2','WeightsInitializer','narrow-normal',...
+    'BiasInitializer','narrow-normal','BiasLearnRateFactor',2,'WeightLearnRateFactor',1.2)
+    reluLayer('name','ReLU 6') 
+    dropoutLayer(0.105,'name','Dropout layer')
+    fullyConnectedLayer(2,'name','Fully connected 3','WeightsInitializer','narrow-normal',...
+    'BiasInitializer','narrow-normal','BiasLearnRateFactor',2,'WeightLearnRateFactor',1.2)
+    softmaxLayer('name','Softmax')
+    classificationLayer('name','Classification Layer')];
+
+options = trainingOptions('sgdm', ...
+    'InitialLearnRate',0.04, ...
+    'Momentum',0.85,...
+    'L2Regularization',5.1e-3,...
+    'MaxEpochs',60,...
+    'Shuffle','every-epoch', ...
+    'ValidationData',imdsValidation2, ...
+    'ValidationFrequency',60, ...
+    'verbose',false, ...
+    'LearnRateSchedule','piecewise','LearnRateDropFactor',0.1,'LearnRateDropPeriod',24,...
+    'plots','training-progress','ExecutionEnvironment','Gpu','MiniBatchSize',115);
+%'LearnRateSchedule','none','LearnRateDropPeriod',70,...
+lgraph=layerGraph(layers)    
+net = trainNetwork(imdsTrain2,layers,options);
+yPred = classify(net,imdsValidation2);
+yValidation = imdsValidation.Labels;
+
+plot(lgraph)
+figure
+confusionchart(yPred,yValidation)
+figure
+plotconfusion(yPred,yValidation)
+figure
+layer=4
+name = net.Layers(layer).Name
+channels = [1 2 3 4]
+net.Layers(end).Classes(channels)
+I = deepDreamImage(net,name,channels, ...
+    'PyramidLevels',1);
+I = imtile(I,'ThumbnailSize',[128 128]);
+imshow(I)
+title(['Layer',name,' Features'],'Interpreter','none')
+figure
